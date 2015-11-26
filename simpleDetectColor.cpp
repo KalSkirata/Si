@@ -16,7 +16,7 @@ int main( int argc, char** argv ){
 	int lowH = 11;
 	int highH = 29;
 
-	int lowS = 90; 
+	int lowS = 100; 
 	int highS = 255;
 
 	int lowV = 71;
@@ -55,11 +55,14 @@ int main( int argc, char** argv ){
 		*/
 
 
-		/*Mat threshold_output;
+		Mat threshold_output;
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
 		int thresh = 100;
 		RNG rng(12345);
+		int largest_area=0;
+ 		int largest_contour_index=0;
+		Rect bounding_rect;
 
 		/// Detect edges using Threshold
 		threshold( imgThresholded, threshold_output, thresh, 255, THRESH_BINARY );
@@ -70,12 +73,23 @@ int main( int argc, char** argv ){
  		vector<Rect> boundRect( contours.size() );
 
 		for( int i = 0; i < contours.size(); i++ ){
-			approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
-			boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+			//approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+			//boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+
+			double a=contourArea( contours[i],false);  //  Find the area of contour
+      	if(a>largest_area){
+       		largest_area=a;
+       		largest_contour_index=i;                //Store the index of largest contour
+       		bounding_rect=boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
+			}
 		}
 
-		Mat drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
-  		for( int i = 0; i< contours.size(); i++ ){
+			Scalar color( 255,255,255);
+			//drawContours( imgOriginal, contours,largest_contour_index, color, CV_FILLED, 8, hierarchy ); // Draw the largest contour using previously stored index.
+			rectangle(imgOriginal, bounding_rect,  Scalar(0,255,0),1, 8,0);
+			imshow( "largest Contour", imgOriginal );
+  		
+		/*for( int i = 0; i< contours.size(); i++ ){
 			Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
 			drawContours( drawing, contours_poly, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
 			rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
