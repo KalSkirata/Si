@@ -29,12 +29,12 @@ else
 endif
 
 #définition des fichiers et dossiers
-PROGNAME = projet
+PROGNAME = simpleDetectColor
 PACKAGE=$(PROGNAME)
 VERSION = 06.1
 distdir = $(PACKAGE)-$(VERSION)
 HEADERS = 
-SOURCES = projet.cpp glimage.c
+SOURCES = simpleDetectColor.cpp glimage.c
 OBJ = $(SOURCES:.cpp=.o)
 DOXYFILE = documentation/Doxyfile
 EXTRAFILES = COPYING haarcascade_eye.xml	\
