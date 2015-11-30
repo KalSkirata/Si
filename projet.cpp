@@ -10,6 +10,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 
+//#include "simpleDetectColor.cpp"
+
 #define  GL_GLEXT_PROTOTYPES
 
 #if defined(__APPLE__) || defined(MACOSX)
@@ -54,7 +56,7 @@ IplImage* frame;
 Mat mat_frame;
 CascadeClassifier* hand_cc;
 
-Mat ci, gsi;
+Mat ci, gsi, imgOriginal;
 
 void initCV(){
 	//capture = cvCaptureFromCAM(CV_CAP_ANY);
@@ -168,6 +170,65 @@ void detectHand(){
     }
 }
 
+void detectColor(){
+	/*VideoCapture cap(0); //capture the video from web cam
+
+	if(!cap.isOpened()){
+		cout << "Cannot open the web cam" << endl;
+		//return NULL;
+	}*/
+
+	int lowH = 11;
+	int highH = 29;
+
+	int lowS = 100; 
+	int highS = 255;
+
+	int lowV = 71;
+	int highV = 255;
+
+	Mat imgHSV, imgThresholded;
+
+	*capture>>imgOriginal;
+
+	/*if (!cap.read(imgOriginal)){
+		cout << "Cannot read a frame from video stream" << endl;
+	}*/
+
+	cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
+
+	inRange(imgHSV, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), imgThresholded); //Threshold the image
+
+	Mat threshold_output;
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	int thresh = 100;
+	RNG rng(12345);
+	int largest_area=0;
+	int largest_contour_index=0;
+	Rect bounding_rect;
+
+	/// Detect edges using Threshold
+	threshold( imgThresholded, threshold_output, thresh, 255, THRESH_BINARY );
+	/// Find contours
+	findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+	vector<vector<Point> > contours_poly( contours.size() );
+	vector<Rect> boundRect( contours.size() );
+
+	for( int i = 0; i < contours.size(); i++ ){
+		double a=contourArea( contours[i],false);  //  Find the area of contour
+		if(a>largest_area){
+			largest_area=a;
+			largest_contour_index=i;                //Store the index of largest contour
+			bounding_rect=boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
+		}
+	}
+
+	Scalar color( 255,255,255);
+	rectangle(imgOriginal, bounding_rect,  Scalar(0,255,0),1, 8,0);
+}
+
 static void initGL(void){
 	initCV();
 	glClearColor (0.0f, 0.0f, 0.0f, 0.0f);
@@ -197,8 +258,9 @@ static void displayQuads(void){
 	texture = ConvertIplToTexture(frame);*/
 	
 	//mat_frame = cvQueryFrame(capture);
-	detectHand();
-	texture = matToTexture(ci, GL_NEAREST, GL_NEAREST, GL_CLAMP);
+	//detectHand();
+	detectColor();
+	texture = matToTexture(imgOriginal, GL_NEAREST, GL_NEAREST, GL_CLAMP);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	//glEnableClientState(GL_COLOR_ARRAY);
