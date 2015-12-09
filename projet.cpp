@@ -10,7 +10,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 
-//#include "simpleDetectColor.cpp"
+//#include "simpleDetectColor.cpp"*
+#include"glm.hpp"
 
 #define  GL_GLEXT_PROTOTYPES
 
@@ -28,7 +29,7 @@
 using namespace cv;
 using namespace std;
 
-GLfloat face[]={-xmax, -ymax, 0.0,
+GLfloat background[]={-xmax, -ymax, 0.0,
 		1.0, 0.0, 0.0,
 		1.0, 1.0,
 		xmax, -ymax, 0.0,
@@ -39,13 +40,15 @@ GLfloat face[]={-xmax, -ymax, 0.0,
 		0.0, 0.0,
 		-xmax, ymax, 0.0,
 		1.0, 0.0, 0.0,
-		1.0, 0.0,
+		1.0, 0.0
 };
 
-static void initGL                 (void);
-static void reshape                (int, int);
-static void displayQuads    (void);
-static void display                (void);
+GLfloat 	swordVBO[24];
+
+static void initGL          (void);
+static void reshape         (int, int);
+static void drawBackground    (void);
+static void display         (void);
 
 static GLuint texture=0;
 
@@ -58,6 +61,10 @@ CascadeClassifier* hand_cc;
 
 Mat ci, gsi, imgOriginal;
 
+GLMmodel *model=NULL;
+
+int x=0, y=0;
+
 void initCV(){
 	//capture = cvCaptureFromCAM(CV_CAP_ANY);
 		
@@ -66,6 +73,36 @@ void initCV(){
 	hand_cc = new CascadeClassifier(xmlPath);
 	
 	capture = new VideoCapture(CV_CAP_ANY);
+}
+
+void initSwordPosition(int x, int y, int z, int width, int height){
+	swordVBO[0] = x;
+	swordVBO[1] = y;
+	swordVBO[2] = z;
+	swordVBO[3] = 0.0;
+	swordVBO[4] = 1.0;
+	swordVBO[5] = 0.0;
+
+	swordVBO[6] = x+width;
+	swordVBO[7] = y;
+	swordVBO[8] = z;
+	swordVBO[9] = 0.0;
+	swordVBO[10] = 1.0;
+	swordVBO[11] = 0.0;
+
+	swordVBO[12] = x+width;
+	swordVBO[13] = y+height;
+	swordVBO[14] = z;
+	swordVBO[15] = 0.0;
+	swordVBO[16] = 1.0;
+	swordVBO[17] = 0.0;
+
+	swordVBO[18] = x;
+	swordVBO[19] = y+height;
+	swordVBO[20] = z;
+	swordVBO[21] = 0.0;
+	swordVBO[22] = 1.0;
+	swordVBO[23] = 0.0;
 }
 
 GLuint ConvertIplToTexture(IplImage *image)
@@ -140,7 +177,8 @@ GLuint matToTexture(cv::Mat &mat, GLenum minFilter, GLenum magFilter, GLenum wra
 	    minFilter == GL_NEAREST_MIPMAP_LINEAR ||
 	    minFilter == GL_NEAREST_MIPMAP_NEAREST)
 	{
-		glGenerateMipmap(GL_TEXTURE_2D);
+		printf("glGenerateMipMap() \n");
+		//glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
 	return textureID;
@@ -170,6 +208,22 @@ void detectHand(){
     }
 }
 
+double convertCoord(int coord, int choice){
+	double xmax_cube = xmax, ymax_cube = ymax, xmax_cam = imgOriginal.cols, ymax_cam = imgOriginal.cols;
+	printf("%f %f %f %f \n", xmax_cube, ymax_cube, xmax_cam, ymax_cam);
+	if(choice==0){ //conversion en x
+		/*printf("convert = %f \n", xmax-((xmax*coord)/imgOriginal.cols));
+		return xmax-((xmax*coord)/imgOriginal.cols); //-xmax car les valeurs sont inversés */
+		printf("convert x = %f \n",xmax_cube-((xmax_cube*coord)/xmax_cam));
+		return xmax_cube-((xmax_cube*coord)/xmax_cam);
+	}else{ //conversion en y
+		/*printf("convert = %f \n", (ymax*coord)/imgOriginal.rows);
+		return (ymax*coord)/imgOriginal.rows;*/
+		printf("convert y = %f \n", (ymax_cube*coord)/ymax_cam);
+		return (ymax_cube*coord)/ymax_cam;
+	}
+}
+
 void detectColor(){
 	/*VideoCapture cap(0); //capture the video from web cam
 
@@ -178,8 +232,8 @@ void detectColor(){
 		//return NULL;
 	}*/
 
-	int lowH = 11;
-	int highH = 29;
+	int lowH = 10;
+	int highH = 30;
 
 	int lowS = 100; 
 	int highS = 255;
@@ -222,12 +276,46 @@ void detectColor(){
 			largest_area=a;
 			largest_contour_index=i;                //Store the index of largest contour
 			bounding_rect=boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
+			
+		/*printf(" x = %d \n",boundingRect(contours[i]).x);
+			x = boundingRect(contours[i]).x;
+			printf(" y = %d \n",boundingRect(contours[i]).y);
+			y = boundingRect(contours[i]).y;
+			printf(" height = %d \n",boundingRect(contours[i]).height);
+			printf(" width = %d \n",boundingRect(contours[i]).width);*/
+
+			printf(" x = %d \n", bounding_rect.x);
+			printf(" y = %d \n", bounding_rect.y);
+			printf(" width = %d \n", bounding_rect.width);
+			printf(" height = %d \n", bounding_rect.height);
+			
+			//initSwordPosition(boundingRect(contours[i]).x, boundingRect(contours[i]).y, 10.0, boundingRect(contours[i]).width, boundingRect(contours[i]).height);
+
+			initSwordPosition(convertCoord(bounding_rect.x,0), convertCoord(bounding_rect.y,1), 10.0, 5.0, 5.0);
 		}
 	}
 
-	Scalar color( 255,255,255);
+	Scalar color(255,255,255);
 	rectangle(imgOriginal, bounding_rect,  Scalar(0,255,0),1, 8,0);
 }
+
+
+/*void drawModel(){
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	glDisable(GL_TEXTURE_2D);
+	glColor3f(1.0, 1.0, 1.0);
+	if(!model) {
+		model = glmReadOBJ("obj/sword/Sword.obj");
+		if (!model) exit(0);
+			glmUnitize(model);
+			glmScale(model, 15);
+
+			glmFacetNormals(model);
+			glmVertexNormals(model, 90.0);
+	} 
+	glmDraw(model, GLM_SMOOTH | GLM_MATERIAL);
+	glPopAttrib();
+}*/
 
 static void initGL(void){
 	initCV();
@@ -253,13 +341,15 @@ void reshape(int width, int height){
 	glMatrixMode(GL_MODELVIEW);
 }
 
-static void displayQuads(void){
+static void drawBackground(void){
 	/*frame = cvQueryFrame(capture);
 	texture = ConvertIplToTexture(frame);*/
 	
 	//mat_frame = cvQueryFrame(capture);
 	//detectHand();
 	detectColor();
+	/*printf("mat.rows = %d \n",imgOriginal.rows);
+	printf("mat.cols = %d \n",imgOriginal.cols);*/
 	texture = matToTexture(imgOriginal, GL_NEAREST, GL_NEAREST, GL_CLAMP);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -267,9 +357,9 @@ static void displayQuads(void){
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glVertexPointer(3, GL_FLOAT, 8*sizeof(GLfloat), face);
-	//glColorPointer(3, GL_FLOAT, 8*sizeof(GLfloat), &(face[3]));
-	glTexCoordPointer(2, GL_FLOAT, 8*sizeof(GLfloat), &(face[6]));
+	glVertexPointer(3, GL_FLOAT, 8*sizeof(GLfloat), background);
+	//glColorPointer(3, GL_FLOAT, 8*sizeof(GLfloat), &(background[3]));
+	glTexCoordPointer(2, GL_FLOAT, 8*sizeof(GLfloat), &(background[6]));
 
 	glDrawArrays(GL_QUADS, 0, 4);
 
@@ -278,17 +368,34 @@ static void displayQuads(void){
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
-void display(void){
-	static GLfloat rot = 0.0;
+static void drawSword(){
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
 
+	glVertexPointer(3, GL_FLOAT, 6*sizeof(GLfloat), swordVBO);
+	glColorPointer(3, GL_FLOAT, 6*sizeof(GLfloat), &(swordVBO[3]));
+
+	glDrawArrays(GL_QUADS, 0, 4);
+
+	glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);	
+}
+
+void display(void){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();					
 	gluLookAt(0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-	displayQuads();
+	drawBackground();
+	//initSwordPosition(0.0, 10.0, 10.0, 20.0, 20.0);
+	drawSword();
+
+	/*glPushMatrix();
+	glTranslatef(0.0, 0.0, 10.0);
+	drawModel();
+	glPopMatrix();*/
 
 	glutSwapBuffers();
-	rot +=3.0;
 }
 
 static void keyboard(unsigned char key, int x, int y){
