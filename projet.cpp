@@ -10,7 +10,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 
-//#include "simpleDetectColor.cpp"*
+//#include "simpleDetectColor.cpp"
 #include"glm.hpp"
 
 #define  GL_GLEXT_PROTOTYPES
@@ -76,7 +76,7 @@ void initCV(){
 }
 
 void initSwordPosition(int x, int y, int z, int width, int height){
-	swordVBO[0] = x;
+	/*swordVBO[0] = x;
 	swordVBO[1] = y;
 	swordVBO[2] = z;
 	swordVBO[3] = 0.0;
@@ -98,6 +98,34 @@ void initSwordPosition(int x, int y, int z, int width, int height){
 	swordVBO[17] = 0.0;
 
 	swordVBO[18] = x;
+	swordVBO[19] = y+height;
+	swordVBO[20] = z;
+	swordVBO[21] = 0.0;
+	swordVBO[22] = 1.0;
+	swordVBO[23] = 0.0;*/
+
+	swordVBO[0] = x-width;
+	swordVBO[1] = y-height;
+	swordVBO[2] = z;
+	swordVBO[3] = 0.0;
+	swordVBO[4] = 1.0;
+	swordVBO[5] = 0.0;
+
+	swordVBO[6] = x+width;
+	swordVBO[7] = y-height;
+	swordVBO[8] = z;
+	swordVBO[9] = 0.0;
+	swordVBO[10] = 1.0;
+	swordVBO[11] = 0.0;
+
+	swordVBO[12] = x+width;
+	swordVBO[13] = y+height;
+	swordVBO[14] = z;
+	swordVBO[15] = 0.0;
+	swordVBO[16] = 1.0;
+	swordVBO[17] = 0.0;
+
+	swordVBO[18] = x-width;
 	swordVBO[19] = y+height;
 	swordVBO[20] = z;
 	swordVBO[21] = 0.0;
@@ -209,18 +237,48 @@ void detectHand(){
 }
 
 double convertCoord(int coord, int choice){
-	double xmax_cube = xmax, ymax_cube = ymax, xmax_cam = imgOriginal.cols, ymax_cam = imgOriginal.cols;
+	double xmax_cube = xmax, ymax_cube = ymax, xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
 	printf("%f %f %f %f \n", xmax_cube, ymax_cube, xmax_cam, ymax_cam);
+
+	if(coord == 0.0)return 0.0;
+
 	if(choice==0){ //conversion en x
 		/*printf("convert = %f \n", xmax-((xmax*coord)/imgOriginal.cols));
 		return xmax-((xmax*coord)/imgOriginal.cols); //-xmax car les valeurs sont inversés */
-		printf("convert x = %f \n",xmax_cube-((xmax_cube*coord)/xmax_cam));
-		return xmax_cube-((xmax_cube*coord)/xmax_cam);
+		//printf("convert x = %f \n",xmax_cube*2-((xmax_cube*2*coord)/xmax_cam));
+
+		/*if(xmax_cube-((xmax_cube*coord)/xmax_cam) < 0){
+			printf(" convert x = %f \n", ((xmax_cube*coord)/xmax_cam));
+			return ((xmax_cube*coord)/xmax_cam);
+		}else{*/
+			if(coord == xmax_cam){
+				return xmax_cam;
+			}else{
+				printf(" convert x = %f \n", xmax_cube*2-((xmax_cube*2*coord)/xmax_cam));
+				return xmax_cube*2-((xmax_cube*2*coord)/xmax_cam);
+			}
+		//}
 	}else{ //conversion en y
 		/*printf("convert = %f \n", (ymax*coord)/imgOriginal.rows);
 		return (ymax*coord)/imgOriginal.rows;*/
-		printf("convert y = %f \n", (ymax_cube*coord)/ymax_cam);
-		return (ymax_cube*coord)/ymax_cam;
+		/*if(coord>ymax_cube){
+			coord = coord+ymax*2;
+		}else if(coord<ymax_cube){
+			coord = ymax*2-coord;
+		}*/
+		//printf("convert y = %f \n", ymax_cube*2-((ymax_cube*2*coord)/ymax_cam));
+
+		/*if(ymax_cube-(ymax_cube*coord)/ymax_cam < 0){
+			printf("convert y = %f \n", (ymax_cube*coord)/ymax_cam);
+			return (ymax_cube*coord)/ymax_cam;
+		}else{*/
+			if(coord == ymax_cam){
+				return ymax_cube/2;
+			}else{
+				printf("convert y = %f \n", ymax*2-(ymax_cube*2*coord)/ymax_cam);
+				return ymax*2-(ymax_cube*2*coord)/ymax_cam;
+			}
+		//}
 	}
 }
 
@@ -291,7 +349,7 @@ void detectColor(){
 			
 			//initSwordPosition(boundingRect(contours[i]).x, boundingRect(contours[i]).y, 10.0, boundingRect(contours[i]).width, boundingRect(contours[i]).height);
 
-			initSwordPosition(convertCoord(bounding_rect.x,0), convertCoord(bounding_rect.y,1), 10.0, 5.0, 5.0);
+			initSwordPosition(convertCoord(bounding_rect.x,0)-5.0/2, convertCoord(bounding_rect.y,1)-10.0/2, 1.0, 5.0/2, 10.0/2);
 		}
 	}
 
