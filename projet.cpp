@@ -43,6 +43,26 @@ GLfloat background[]={-xmax, -ymax, 0.0,
 		1.0, 0.0
 };
 
+GLfloat data[] = {/*
+	-1.f, 1.f, 0.f,
+	1.0, 0.0,
+	1.f, 1.f, 0.f,
+	0.0, 0.0,
+	1.f,  -1.f, 0.f,
+	0.0, 1.0,
+	-1.f,  -1.f, 0.f,
+	1.0, 1.0*/
+
+	-1.f, -1.f, 0.f,
+	1.0f, 1.0f,
+	1.f, -1.f, 0.f,
+	0.0f, 1.0f,
+	1.f,  1.f, 0.f,
+	0.0f, 0.0f,
+	-1.f,  1.f, 0.f,
+	1.0f, 0.0f
+};
+
 GLfloat 	swordVBO[24];
 
 static void initGL          (void);
@@ -76,7 +96,7 @@ void initCV(){
 }
 
 void initSwordPosition(int x, int y, int z, int width, int height){
-	/*swordVBO[0] = x;
+	swordVBO[0] = x;
 	swordVBO[1] = y;
 	swordVBO[2] = z;
 	swordVBO[3] = 0.0;
@@ -102,9 +122,9 @@ void initSwordPosition(int x, int y, int z, int width, int height){
 	swordVBO[20] = z;
 	swordVBO[21] = 0.0;
 	swordVBO[22] = 1.0;
-	swordVBO[23] = 0.0;*/
+	swordVBO[23] = 0.0;
 
-	swordVBO[0] = x-width;
+	/*swordVBO[0] = x-width;
 	swordVBO[1] = y-height;
 	swordVBO[2] = z;
 	swordVBO[3] = 0.0;
@@ -130,7 +150,7 @@ void initSwordPosition(int x, int y, int z, int width, int height){
 	swordVBO[20] = z;
 	swordVBO[21] = 0.0;
 	swordVBO[22] = 1.0;
-	swordVBO[23] = 0.0;
+	swordVBO[23] = 0.0;*/
 }
 
 GLuint ConvertIplToTexture(IplImage *image)
@@ -237,49 +257,58 @@ void detectHand(){
 }
 
 double convertCoord(int coord, int choice){
-	double xmax_cube = xmax, ymax_cube = ymax, xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
-	printf("%f %f %f %f \n", xmax_cube, ymax_cube, xmax_cam, ymax_cam);
+	double /*xmax_cube = xmax*2, ymax_cube = ymax*2,*/ xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
+	printf("xcam = %f ycam = %f\n", xmax_cam, ymax_cam);
 
-	if(coord == 0.0)return 0.0;
-
-	if(choice==0){ //conversion en x
-		/*printf("convert = %f \n", xmax-((xmax*coord)/imgOriginal.cols));
-		return xmax-((xmax*coord)/imgOriginal.cols); //-xmax car les valeurs sont inversés */
-		//printf("convert x = %f \n",xmax_cube*2-((xmax_cube*2*coord)/xmax_cam));
-
-		/*if(xmax_cube-((xmax_cube*coord)/xmax_cam) < 0){
-			printf(" convert x = %f \n", ((xmax_cube*coord)/xmax_cam));
-			return ((xmax_cube*coord)/xmax_cam);
-		}else{*/
-			if(coord == xmax_cam){
-				return xmax_cam;
-			}else{
-				printf(" convert x = %f \n", xmax_cube*2-((xmax_cube*2*coord)/xmax_cam));
-				return xmax_cube*2-((xmax_cube*2*coord)/xmax_cam);
-			}
-		//}
-	}else{ //conversion en y
-		/*printf("convert = %f \n", (ymax*coord)/imgOriginal.rows);
-		return (ymax*coord)/imgOriginal.rows;*/
-		/*if(coord>ymax_cube){
-			coord = coord+ymax*2;
-		}else if(coord<ymax_cube){
-			coord = ymax*2-coord;
-		}*/
-		//printf("convert y = %f \n", ymax_cube*2-((ymax_cube*2*coord)/ymax_cam));
-
-		/*if(ymax_cube-(ymax_cube*coord)/ymax_cam < 0){
-			printf("convert y = %f \n", (ymax_cube*coord)/ymax_cam);
-			return (ymax_cube*coord)/ymax_cam;
-		}else{*/
-			if(coord == ymax_cam){
-				return ymax_cube/2;
-			}else{
-				printf("convert y = %f \n", ymax*2-(ymax_cube*2*coord)/ymax_cam);
-				return ymax*2-(ymax_cube*2*coord)/ymax_cam;
-			}
-		//}
+	if(choice==0){
+		printf("convert x = %f \n", (((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1));
+		return (((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1);
+	}else{
+		printf("convert y = %f \n", (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1));
+		return (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1);
 	}
+
+	/*if(coord == 0.0)return 0.0;
+
+	if(choice == 0){ //conversion en x
+		if(coord == xmax_cam){
+			printf("convert x = %f \n", xmax_cube);
+			return xmax_cube;
+		//}else if(coord < ymax_cam/2){
+		//	printf("convert x = %f \n", ((xmax_cube*coord)/xmax_cam));
+		//	return ((xmax_cube*coord)/xmax_cam);
+		}else{
+			printf("convert x = %f \n", xmax_cube-((xmax_cube*coord)/xmax_cam));
+			return xmax_cube-((xmax_cube*coord)/xmax_cam);
+		}
+	}else{ //conversion en y
+		if(coord == ymax_cam){
+			printf("convert y = %f \n", ymax_cube);
+			return ymax_cube;
+		//}else if(coord < ymax_cam/2){
+			///
+		}else{
+			printf("convert y = %f \n", ymax_cube-(ymax_cube*coord)/ymax_cam);
+			return ymax_cube-(ymax_cube*coord)/ymax_cam;
+		}
+	}*/
+}
+
+void drawModel(double x, double y, double z){
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	glDisable(GL_TEXTURE_2D);
+	glColor3f(1.0, 1.0, 1.0);
+	if(!model) {
+		model = glmReadOBJ("obj/sword/Sword.obj");
+		if (!model) exit(0);
+			glmUnitize(model);
+			glmScale(model, 15);
+
+			glmFacetNormals(model);
+			glmVertexNormals(model, 90.0);
+	} 
+	glmDraw(model, GLM_SMOOTH | GLM_MATERIAL);
+	glPopAttrib();
 }
 
 void detectColor(){
@@ -334,46 +363,19 @@ void detectColor(){
 			largest_area=a;
 			largest_contour_index=i;                //Store the index of largest contour
 			bounding_rect=boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
-			
-		/*printf(" x = %d \n",boundingRect(contours[i]).x);
-			x = boundingRect(contours[i]).x;
-			printf(" y = %d \n",boundingRect(contours[i]).y);
-			y = boundingRect(contours[i]).y;
-			printf(" height = %d \n",boundingRect(contours[i]).height);
-			printf(" width = %d \n",boundingRect(contours[i]).width);*/
 
 			printf(" x = %d \n", bounding_rect.x);
 			printf(" y = %d \n", bounding_rect.y);
 			printf(" width = %d \n", bounding_rect.width);
 			printf(" height = %d \n", bounding_rect.height);
-			
-			//initSwordPosition(boundingRect(contours[i]).x, boundingRect(contours[i]).y, 10.0, boundingRect(contours[i]).width, boundingRect(contours[i]).height);
-
-			initSwordPosition(convertCoord(bounding_rect.x,0)-5.0/2, convertCoord(bounding_rect.y,1)-10.0/2, 1.0, 5.0/2, 10.0/2);
 		}
 	}
 
 	Scalar color(255,255,255);
-	rectangle(imgOriginal, bounding_rect,  Scalar(0,255,0),1, 8,0);
+	rectangle(imgOriginal, bounding_rect, Scalar(0,255,0),1, 8,0);
+	//initSwordPosition(convertCoord(bounding_rect.x,0), convertCoord(bounding_rect.y,1), 1.0, 1.0, 1.0);
+	drawModel(convertCoord(bounding_rect.x,0), convertCoord(bounding_rect.y,1), 1.0);
 }
-
-
-/*void drawModel(){
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(1.0, 1.0, 1.0);
-	if(!model) {
-		model = glmReadOBJ("obj/sword/Sword.obj");
-		if (!model) exit(0);
-			glmUnitize(model);
-			glmScale(model, 15);
-
-			glmFacetNormals(model);
-			glmVertexNormals(model, 90.0);
-	} 
-	glmDraw(model, GLM_SMOOTH | GLM_MATERIAL);
-	glPopAttrib();
-}*/
 
 static void initGL(void){
 	initCV();
@@ -395,7 +397,7 @@ void reshape(int width, int height){
 	glViewport(0,0,(GLsizei)(width),(GLsizei)(height));
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0f, (GLfloat)width/height, 0.01f, 1000.0f);	
+	gluPerspective(60.0f, (GLfloat)width/height, 0.01f, 5000.0f);	
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -439,14 +441,28 @@ static void drawSword(){
 	glDisableClientState(GL_VERTEX_ARRAY);	
 }
 
+static void drawData(){
+	detectColor();
+	texture = matToTexture(imgOriginal, GL_NEAREST, GL_NEAREST, GL_CLAMP);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 5*sizeof(GLfloat), data);
+	glTexCoordPointer(2, GL_FLOAT, 5*sizeof(GLfloat), &(data[3]));
+	glDrawArrays(GL_QUADS, 0, 4);
+	glDisableClientState(GL_VERTEX_ARRAY);	
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
+
 void display(void){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();					
-	gluLookAt(0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-	drawBackground();
-	//initSwordPosition(0.0, 10.0, 10.0, 20.0, 20.0);
-	drawSword();
+	drawData();
+	//drawBackground();
+	//drawSword();
 
 	/*glPushMatrix();
 	glTranslatef(0.0, 0.0, 10.0);
@@ -465,7 +481,7 @@ int main(int argc, char **argv){
 	glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize (500, 500); 
 	glutInitWindowPosition (100, 100); 
-	glutCreateWindow (argv[0]); 
+	glutCreateWindow (argv[0]);
 	initGL();  
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
