@@ -10,7 +10,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 
-//#include "simpleDetectColor.cpp"
 #include"glm.hpp"
 
 #define  GL_GLEXT_PROTOTYPES
@@ -95,7 +94,7 @@ void initCV(){
 	capture = new VideoCapture(CV_CAP_ANY);
 }
 
-void initSwordPosition(int x, int y, int z, int width, int height){
+void initSwordPosition(double x, double y, double z, double width, double height){
 	swordVBO[0] = x;
 	swordVBO[1] = y;
 	swordVBO[2] = z;
@@ -124,6 +123,7 @@ void initSwordPosition(int x, int y, int z, int width, int height){
 	swordVBO[22] = 1.0;
 	swordVBO[23] = 0.0;
 
+	printf("swordVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", swordVBO[0], swordVBO[1], swordVBO[2], swordVBO[6], swordVBO[7], swordVBO[8], swordVBO[12], swordVBO[13], swordVBO[14], swordVBO[18], swordVBO[19], swordVBO[20]);
 	/*swordVBO[0] = x-width;
 	swordVBO[1] = y-height;
 	swordVBO[2] = z;
@@ -257,7 +257,7 @@ void detectHand(){
 }
 
 double convertCoord(int coord, int choice){
-	double /*xmax_cube = xmax*2, ymax_cube = ymax*2,*/ xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
+	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
 	printf("xcam = %f ycam = %f\n", xmax_cam, ymax_cam);
 
 	if(choice==0){
@@ -268,33 +268,16 @@ double convertCoord(int coord, int choice){
 		return (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1);
 	}
 
-	/*if(coord == 0.0)return 0.0;
-
-	if(choice == 0){ //conversion en x
-		if(coord == xmax_cam){
-			printf("convert x = %f \n", xmax_cube);
-			return xmax_cube;
-		//}else if(coord < ymax_cam/2){
-		//	printf("convert x = %f \n", ((xmax_cube*coord)/xmax_cam));
-		//	return ((xmax_cube*coord)/xmax_cam);
-		}else{
-			printf("convert x = %f \n", xmax_cube-((xmax_cube*coord)/xmax_cam));
-			return xmax_cube-((xmax_cube*coord)/xmax_cam);
-		}
-	}else{ //conversion en y
-		if(coord == ymax_cam){
-			printf("convert y = %f \n", ymax_cube);
-			return ymax_cube;
-		//}else if(coord < ymax_cam/2){
-			///
-		}else{
-			printf("convert y = %f \n", ymax_cube-(ymax_cube*coord)/ymax_cam);
-			return ymax_cube-(ymax_cube*coord)/ymax_cam;
-		}
+	/*if(choice==0){
+		printf("convert x = %f \n", (((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1));
+		return (((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1);
+	}else{
+		printf("convert y = %f \n", (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1));
+		return (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1);
 	}*/
 }
 
-void drawModel(double x, double y, double z){
+/*void drawModel(double x, double y, double z){
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(1.0, 1.0, 1.0);
@@ -309,7 +292,7 @@ void drawModel(double x, double y, double z){
 	} 
 	glmDraw(model, GLM_SMOOTH | GLM_MATERIAL);
 	glPopAttrib();
-}
+}*/
 
 void detectColor(){
 	/*VideoCapture cap(0); //capture the video from web cam
@@ -373,8 +356,7 @@ void detectColor(){
 
 	Scalar color(255,255,255);
 	rectangle(imgOriginal, bounding_rect, Scalar(0,255,0),1, 8,0);
-	//initSwordPosition(convertCoord(bounding_rect.x,0), convertCoord(bounding_rect.y,1), 1.0, 1.0, 1.0);
-	drawModel(convertCoord(bounding_rect.x,0), convertCoord(bounding_rect.y,1), 1.0);
+	initSwordPosition(convertCoord(bounding_rect.x,0)-0.1, convertCoord(bounding_rect.y,1)-0.3, 0.1, 0.1, 0.3);
 }
 
 static void initGL(void){
@@ -462,7 +444,7 @@ void display(void){
 
 	drawData();
 	//drawBackground();
-	//drawSword();
+	drawSword();
 
 	/*glPushMatrix();
 	glTranslatef(0.0, 0.0, 10.0);
