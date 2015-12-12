@@ -11,6 +11,7 @@
 #include <opencv2/objdetect/objdetect.hpp>
 
 #include"glm.hpp"
+#include"glimage.hpp"
 
 #define  GL_GLEXT_PROTOTYPES
 
@@ -62,14 +63,14 @@ GLfloat data[] = {/*
 	1.0f, 0.0f
 };
 
-GLfloat 	swordVBO[24];
+GLfloat 	swordVBO[32], bladeVBO[32];
 
 static void initGL          (void);
 static void reshape         (int, int);
 static void drawBackground    (void);
 static void display         (void);
 
-static GLuint texture=0;
+static GLuint texture=0, hiltText = 0, bladeText = 0;
 
 //CvCapture* capture;
 VideoCapture *capture;
@@ -95,62 +96,41 @@ void initCV(){
 }
 
 void initSwordPosition(double x, double y, double z, double width, double height){
-	swordVBO[0] = x;
-	swordVBO[1] = y;
-	swordVBO[2] = z;
-	swordVBO[3] = 0.0;
-	swordVBO[4] = 1.0;
-	swordVBO[5] = 0.0;
+	swordVBO[0] = x; swordVBO[1] = y; swordVBO[2] = z;
+	swordVBO[3] = 0.0; swordVBO[4] = 1.0; swordVBO[5] = 0.0;
+	swordVBO[6] = 0.0; swordVBO[7] = 1.0;
 
-	swordVBO[6] = x+width;
-	swordVBO[7] = y;
-	swordVBO[8] = z;
-	swordVBO[9] = 0.0;
-	swordVBO[10] = 1.0;
-	swordVBO[11] = 0.0;
+	swordVBO[8] = x+width; swordVBO[9] = y; swordVBO[10] = z;
+	swordVBO[11] = 0.0; swordVBO[12] = 1.0; swordVBO[13] = 0.0;
+	swordVBO[14] = 0.0; swordVBO[15] = 0.0;
 
-	swordVBO[12] = x+width;
-	swordVBO[13] = y+height;
-	swordVBO[14] = z;
-	swordVBO[15] = 0.0;
-	swordVBO[16] = 1.0;
-	swordVBO[17] = 0.0;
+	swordVBO[16] = x+width;	swordVBO[17] = y+height;	swordVBO[18] = z;
+	swordVBO[19] = 0.0;	swordVBO[20] = 1.0;	swordVBO[21] = 0.0;
+	swordVBO[22] = 1.0;	swordVBO[23] = 0.0;
 
-	swordVBO[18] = x;
-	swordVBO[19] = y+height;
-	swordVBO[20] = z;
-	swordVBO[21] = 0.0;
-	swordVBO[22] = 1.0;
-	swordVBO[23] = 0.0;
+	swordVBO[24] = x;	swordVBO[25] = y+height;	swordVBO[26] = z;
+	swordVBO[27] = 0.0;	swordVBO[28] = 1.0;	swordVBO[29] = 0.0;
+	swordVBO[30] = 1.0;	swordVBO[31] = 1.0;
 
 	printf("swordVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", swordVBO[0], swordVBO[1], swordVBO[2], swordVBO[6], swordVBO[7], swordVBO[8], swordVBO[12], swordVBO[13], swordVBO[14], swordVBO[18], swordVBO[19], swordVBO[20]);
-	/*swordVBO[0] = x-width;
-	swordVBO[1] = y-height;
-	swordVBO[2] = z;
-	swordVBO[3] = 0.0;
-	swordVBO[4] = 1.0;
-	swordVBO[5] = 0.0;
+	
+	bladeVBO[0] = x; bladeVBO[1] = y+height; bladeVBO[2] = z;
+	bladeVBO[3] = 0.0; bladeVBO[4] = 1.0; bladeVBO[5] = 0.0;
+	bladeVBO[6] = 0.0; bladeVBO[7] = 1.0;
 
-	swordVBO[6] = x+width;
-	swordVBO[7] = y-height;
-	swordVBO[8] = z;
-	swordVBO[9] = 0.0;
-	swordVBO[10] = 1.0;
-	swordVBO[11] = 0.0;
+	bladeVBO[8] = x+width; bladeVBO[9] = y+height; bladeVBO[10] = z;
+	bladeVBO[11] = 0.0; bladeVBO[12] = 1.0; bladeVBO[13] = 0.0;
+	bladeVBO[14] = 0.0; bladeVBO[15] = 0.0;
 
-	swordVBO[12] = x+width;
-	swordVBO[13] = y+height;
-	swordVBO[14] = z;
-	swordVBO[15] = 0.0;
-	swordVBO[16] = 1.0;
-	swordVBO[17] = 0.0;
+	bladeVBO[16] = x+width;	bladeVBO[17] = y+3*height;	bladeVBO[18] = z;
+	bladeVBO[19] = 0.0;	bladeVBO[20] = 1.0;	bladeVBO[21] = 0.0;
+	bladeVBO[22] = 1.0;	bladeVBO[23] = 0.0;
 
-	swordVBO[18] = x-width;
-	swordVBO[19] = y+height;
-	swordVBO[20] = z;
-	swordVBO[21] = 0.0;
-	swordVBO[22] = 1.0;
-	swordVBO[23] = 0.0;*/
+	bladeVBO[24] = x;	bladeVBO[25] = y+3*height;	bladeVBO[26] = z;
+	bladeVBO[27] = 0.0;	bladeVBO[28] = 1.0;	bladeVBO[29] = 0.0;
+	bladeVBO[30] = 1.0;	bladeVBO[31] = 1.0;
+
+	printf("bladeVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", bladeVBO[0], bladeVBO[1], bladeVBO[2], bladeVBO[6], bladeVBO[7], bladeVBO[8], bladeVBO[12], bladeVBO[13], bladeVBO[14], bladeVBO[18], bladeVBO[19], bladeVBO[20]);
 }
 
 GLuint ConvertIplToTexture(IplImage *image)
@@ -256,7 +236,7 @@ void detectHand(){
     }
 }
 
-double convertCoord(int coord, int choice){
+/*double convertCoord(int coord, int choice){
 	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
 	printf("xcam = %f ycam = %f\n", xmax_cam, ymax_cam);
 
@@ -267,14 +247,38 @@ double convertCoord(int coord, int choice){
 		printf("convert y = %f \n", (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1));
 		return (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1);
 	}
+}*/
 
-	/*if(choice==0){
-		printf("convert x = %f \n", (((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1));
-		return (((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1);
+double convertCoord(int coord, int choice, double width, double height){
+	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
+	printf("xcam = %f ycam = %f\n", xmax_cam, ymax_cam);
+	if(choice==0){
+		printf("convert x = %f \n", ((((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width);
+		return ((((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width;
 	}else{
-		printf("convert y = %f \n", (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1));
-		return (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1);
-	}*/
+		if(choice==1)printf("convert y = %f \n", (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height);
+		return (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height;
+	}
+}
+
+double convertX(double x, double width, double height){
+	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
+	printf("convert x = %f \n", ((((2*x*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width);
+	return ((((2*x*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width;
+}
+
+double convertY(double y, double width, double height){
+	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
+	printf("convert y = %f \n", (((2*(ymax_cam-y*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height);
+	return (((2*(ymax_cam-y*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height;
+}
+
+double convertWidth(double toConvert){
+	return ((2*toConvert)/imgOriginal.rows)+0.1;
+}
+
+double convertHeight(double toConvert){
+	return ((2*toConvert)/imgOriginal.cols)+0.1;
 }
 
 /*void drawModel(double x, double y, double z){
@@ -356,7 +360,11 @@ void detectColor(){
 
 	Scalar color(255,255,255);
 	rectangle(imgOriginal, bounding_rect, Scalar(0,255,0),1, 8,0);
-	initSwordPosition(convertCoord(bounding_rect.x,0)-0.1, convertCoord(bounding_rect.y,1)-0.3, 0.1, 0.1, 0.3);
+	initSwordPosition(convertX(bounding_rect.x,convertWidth(bounding_rect.width),convertHeight(bounding_rect.height)),
+							convertY(bounding_rect.y,convertWidth(bounding_rect.width),convertHeight(bounding_rect.height)), 
+							0.1,
+							convertWidth(bounding_rect.width),
+							convertHeight(bounding_rect.height));
 }
 
 static void initGL(void){
@@ -366,11 +374,17 @@ static void initGL(void){
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 
-	/*glimageLoadAndBind("visages.jpg", &texture);
+	glimageLoadAndBind("hilt.jpg", &hiltText);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
+	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	glimageLoadAndBind("blade.jpg", &bladeText);
+	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -411,16 +425,37 @@ static void drawBackground(void){
 }
 
 static void drawSword(){
+	glBindTexture(GL_TEXTURE_2D, hiltText);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
+	//glEnableClientState(GL_COLOR_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glVertexPointer(3, GL_FLOAT, 6*sizeof(GLfloat), swordVBO);
-	glColorPointer(3, GL_FLOAT, 6*sizeof(GLfloat), &(swordVBO[3]));
-
+	glVertexPointer(3, GL_FLOAT, 8*sizeof(GLfloat), swordVBO);
+	//glColorPointer(3, GL_FLOAT, 6*sizeof(GLfloat), &(swordVBO[3]));
+	glTexCoordPointer(2, GL_FLOAT, 8*sizeof(GLfloat), &(swordVBO[6]));
+	
 	glDrawArrays(GL_QUADS, 0, 4);
 
-	glDisableClientState(GL_COLOR_ARRAY);
+	//glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);	
+}
+
+static void drawBlade(){
+	glBindTexture(GL_TEXTURE_2D, bladeText);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_COLOR_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glVertexPointer(3, GL_FLOAT, 8*sizeof(GLfloat), bladeVBO);
+	//glColorPointer(3, GL_FLOAT, 6*sizeof(GLfloat), &(bladeVBO[3]));
+	glTexCoordPointer(2, GL_FLOAT, 8*sizeof(GLfloat), &(bladeVBO[6]));
+	
+	glDrawArrays(GL_QUADS, 0, 4);
+
+	//glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 static void drawData(){
@@ -445,6 +480,7 @@ void display(void){
 	drawData();
 	//drawBackground();
 	drawSword();
+	drawBlade();
 
 	/*glPushMatrix();
 	glTranslatef(0.0, 0.0, 10.0);
@@ -455,7 +491,7 @@ void display(void){
 }
 
 static void keyboard(unsigned char key, int x, int y){
-	if (key == 27 ) exit(0);
+	if (key == 27) exit(0);
 }
 
 int main(int argc, char **argv){
