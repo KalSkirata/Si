@@ -1,8 +1,3 @@
-#  Makefile 
-#  Auteur : Farès BELHADJ
-#  Email  : amsi@ai.univ-paris8.fr
-#  Date   : 03/02/2014
-
 SHELL = /bin/sh
 # définition des commandes utilisées
 CPPC = g++
@@ -29,12 +24,12 @@ else
 endif
 
 #définition des fichiers et dossiers
-PROGNAME = simpleDetectColor
+PROGNAME = projet
 PACKAGE=$(PROGNAME)
 VERSION = 06.1
 distdir = $(PACKAGE)-$(VERSION)
 HEADERS = 
-SOURCES = simpleDetectColor.cpp glimage.c
+SOURCES = projet.cpp glimage/glimage.cpp
 OBJ = $(SOURCES:.cpp=.o)
 DOXYFILE = documentation/Doxyfile
 EXTRAFILES = COPYING haarcascade_eye.xml	\
