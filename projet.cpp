@@ -96,39 +96,39 @@ void initCV(){
 }
 
 void initSwordPosition(double x, double y, double z, double width, double height){
-	swordVBO[0] = x; swordVBO[1] = y; swordVBO[2] = z;
+	swordVBO[0] = x+0.2; swordVBO[1] = y; swordVBO[2] = z;
 	swordVBO[3] = 0.0; swordVBO[4] = 1.0; swordVBO[5] = 0.0;
 	swordVBO[6] = 0.0; swordVBO[7] = 1.0;
 
-	swordVBO[8] = x+width; swordVBO[9] = y; swordVBO[10] = z;
+	swordVBO[8] = x+width+0.2; swordVBO[9] = y; swordVBO[10] = z;
 	swordVBO[11] = 0.0; swordVBO[12] = 1.0; swordVBO[13] = 0.0;
 	swordVBO[14] = 0.0; swordVBO[15] = 0.0;
 
-	swordVBO[16] = x+width;	swordVBO[17] = y+height;	swordVBO[18] = z;
+	swordVBO[16] = x+width+0.2;	swordVBO[17] = y+height;	swordVBO[18] = z;
 	swordVBO[19] = 0.0;	swordVBO[20] = 1.0;	swordVBO[21] = 0.0;
 	swordVBO[22] = 1.0;	swordVBO[23] = 0.0;
 
-	swordVBO[24] = x;	swordVBO[25] = y+height;	swordVBO[26] = z;
+	swordVBO[24] = x+0.2;	swordVBO[25] = y+height;	swordVBO[26] = z;
 	swordVBO[27] = 0.0;	swordVBO[28] = 1.0;	swordVBO[29] = 0.0;
 	swordVBO[30] = 1.0;	swordVBO[31] = 1.0;
 
 	printf("swordVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", swordVBO[0], swordVBO[1], swordVBO[2], swordVBO[6], swordVBO[7], swordVBO[8], swordVBO[12], swordVBO[13], swordVBO[14], swordVBO[18], swordVBO[19], swordVBO[20]);
 	
-	bladeVBO[0] = x; bladeVBO[1] = y+height; bladeVBO[2] = z;
+	bladeVBO[0] = x+0.2; bladeVBO[1] = y+height-0.1; bladeVBO[2] = z;
 	bladeVBO[3] = 0.0; bladeVBO[4] = 1.0; bladeVBO[5] = 0.0;
-	bladeVBO[6] = 0.0; bladeVBO[7] = 1.0;
+	bladeVBO[6] = 0.0; bladeVBO[7] = 0.0;
 
-	bladeVBO[8] = x+width; bladeVBO[9] = y+height; bladeVBO[10] = z;
+	bladeVBO[8] = x+width+0.2; bladeVBO[9] = y+height-0.1; bladeVBO[10] = z;
 	bladeVBO[11] = 0.0; bladeVBO[12] = 1.0; bladeVBO[13] = 0.0;
-	bladeVBO[14] = 0.0; bladeVBO[15] = 0.0;
+	bladeVBO[14] = 1.0; bladeVBO[15] = 0.0;
 
-	bladeVBO[16] = x+width;	bladeVBO[17] = y+3*height;	bladeVBO[18] = z;
+	bladeVBO[16] = x+width+0.2;	bladeVBO[17] = y+4*height;	bladeVBO[18] = z;
 	bladeVBO[19] = 0.0;	bladeVBO[20] = 1.0;	bladeVBO[21] = 0.0;
-	bladeVBO[22] = 1.0;	bladeVBO[23] = 0.0;
+	bladeVBO[22] = 1.0;	bladeVBO[23] = 1.0;
 
-	bladeVBO[24] = x;	bladeVBO[25] = y+3*height;	bladeVBO[26] = z;
+	bladeVBO[24] = x+0.2;	bladeVBO[25] = y+4*height;	bladeVBO[26] = z;
 	bladeVBO[27] = 0.0;	bladeVBO[28] = 1.0;	bladeVBO[29] = 0.0;
-	bladeVBO[30] = 1.0;	bladeVBO[31] = 1.0;
+	bladeVBO[30] = 0.0;	bladeVBO[31] = 1.0;
 
 	printf("bladeVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", bladeVBO[0], bladeVBO[1], bladeVBO[2], bladeVBO[6], bladeVBO[7], bladeVBO[8], bladeVBO[12], bladeVBO[13], bladeVBO[14], bladeVBO[18], bladeVBO[19], bladeVBO[20]);
 }
@@ -359,12 +359,12 @@ void detectColor(){
 	}
 
 	Scalar color(255,255,255);
-	rectangle(imgOriginal, bounding_rect, Scalar(0,255,0),1, 8,0);
-	initSwordPosition(convertX(bounding_rect.x,convertWidth(bounding_rect.width),convertHeight(bounding_rect.height)),
-							convertY(bounding_rect.y,convertWidth(bounding_rect.width),convertHeight(bounding_rect.height)), 
+	//rectangle(imgOriginal, bounding_rect, Scalar(0,255,0),1, 8,0);
+	initSwordPosition(convertX(bounding_rect.x,convertWidth(bounding_rect.width)+0.2,convertHeight(bounding_rect.height)+0.2),
+							convertY(bounding_rect.y,convertWidth(bounding_rect.width)+0.2,convertHeight(bounding_rect.height)+0.2), 
 							0.1,
-							convertWidth(bounding_rect.width),
-							convertHeight(bounding_rect.height));
+							convertWidth(bounding_rect.width)+0.2,
+							convertHeight(bounding_rect.height)+0.2);
 }
 
 static void initGL(void){
@@ -374,13 +374,17 @@ static void initGL(void){
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 
-	glimageLoadAndBind("hilt.jpg", &hiltText);
+	//for the transparency of the textures
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glimageLoadAndBind("hilt.png", &hiltText);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	glimageLoadAndBind("blade.jpg", &bladeText);
+	glimageLoadAndBind("blade.png", &bladeText);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
