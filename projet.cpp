@@ -10,10 +10,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 
-#include"glm.hpp"
 #include"glimage.hpp"
 
 #define  GL_GLEXT_PROTOTYPES
+#define INFO if(0) printf
 
 #if defined(__APPLE__) || defined(MACOSX)
 # include <GLUT/glut.h> 
@@ -21,38 +21,21 @@
 # include <GL/glut.h>
 #endif
 
-#define xmax 10
-#define ymax 10
-
-#define xmlPath "haarcascade_frontalface_default.xml"
-
 using namespace cv;
 using namespace std;
 
-GLfloat background[]={-xmax, -ymax, 0.0,
-		1.0, 0.0, 0.0,
-		1.0, 1.0,
-		xmax, -ymax, 0.0,
-		1.0, 0.0, 0.0,
-		0.0, 1.0,
-		xmax, ymax, 0.0,
-		1.0, 0.0, 0.0,
-		0.0, 0.0,
-		-xmax, ymax, 0.0,
-		1.0, 0.0, 0.0,
-		1.0, 0.0
-};
+static void initGL          (void);
+static void reshape         (int, int);
+static void drawBackground    (void);
+static void display         (void);
 
-GLfloat data[] = {/*
-	-1.f, 1.f, 0.f,
-	1.0, 0.0,
-	1.f, 1.f, 0.f,
-	0.0, 0.0,
-	1.f,  -1.f, 0.f,
-	0.0, 1.0,
-	-1.f,  -1.f, 0.f,
-	1.0, 1.0*/
+static GLuint camText=0, hiltText = 0, bladeText = 0;
 
+VideoCapture *capture;
+
+Mat imgOriginal;
+
+GLfloat camVBO[] = {
 	-1.f, -1.f, 0.f,
 	1.0f, 1.0f,
 	1.f, -1.f, 0.f,
@@ -63,91 +46,40 @@ GLfloat data[] = {/*
 	1.0f, 0.0f
 };
 
-GLfloat 	swordVBO[32], bladeVBO[32];
-
-static void initGL          (void);
-static void reshape         (int, int);
-static void drawBackground    (void);
-static void display         (void);
-
-static GLuint texture=0, hiltText = 0, bladeText = 0;
-
-//CvCapture* capture;
-VideoCapture *capture;
-
-IplImage* frame;
-Mat mat_frame;
-CascadeClassifier* hand_cc;
-
-Mat ci, gsi, imgOriginal;
-
-GLMmodel *model=NULL;
-
-int x=0, y=0;
+GLfloat 	swordVBO[20], bladeVBO[32];
 
 void initCV(){
-	//capture = cvCaptureFromCAM(CV_CAP_ANY);
-		
-	//if( !hand_cc.load(xmlPath) ){ printf("--(!)Error loading xml file\n");};
-	
-	hand_cc = new CascadeClassifier(xmlPath);
-	
 	capture = new VideoCapture(CV_CAP_ANY);
 }
 
 void initSwordPosition(double x, double y, double z, double width, double height){
 	swordVBO[0] = x+0.2; swordVBO[1] = y; swordVBO[2] = z;
-	swordVBO[3] = 0.0; swordVBO[4] = 1.0; swordVBO[5] = 0.0;
-	swordVBO[6] = 0.0; swordVBO[7] = 1.0;
+	swordVBO[3] = 0.0; swordVBO[4] = 1.0;
 
-	swordVBO[8] = x+width+0.2; swordVBO[9] = y; swordVBO[10] = z;
-	swordVBO[11] = 0.0; swordVBO[12] = 1.0; swordVBO[13] = 0.0;
-	swordVBO[14] = 0.0; swordVBO[15] = 0.0;
+	swordVBO[5] = x+width+0.2; swordVBO[6] = y; swordVBO[7] = z;
+	swordVBO[8] = 0.0; swordVBO[9] = 0.0;
 
-	swordVBO[16] = x+width+0.2;	swordVBO[17] = y+height;	swordVBO[18] = z;
-	swordVBO[19] = 0.0;	swordVBO[20] = 1.0;	swordVBO[21] = 0.0;
-	swordVBO[22] = 1.0;	swordVBO[23] = 0.0;
+	swordVBO[10] = x+width+0.2;	swordVBO[11] = y+height;	swordVBO[12] = z;
+	swordVBO[13] = 1.0;	swordVBO[14] = 0.0;
 
-	swordVBO[24] = x+0.2;	swordVBO[25] = y+height;	swordVBO[26] = z;
-	swordVBO[27] = 0.0;	swordVBO[28] = 1.0;	swordVBO[29] = 0.0;
-	swordVBO[30] = 1.0;	swordVBO[31] = 1.0;
+	swordVBO[15] = x+0.2;	swordVBO[16] = y+height;	swordVBO[17] = z;
+	swordVBO[18] = 1.0;	swordVBO[19] = 1.0;
 
-	printf("swordVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", swordVBO[0], swordVBO[1], swordVBO[2], swordVBO[6], swordVBO[7], swordVBO[8], swordVBO[12], swordVBO[13], swordVBO[14], swordVBO[18], swordVBO[19], swordVBO[20]);
+	INFO("swordVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", swordVBO[0], swordVBO[1], swordVBO[2], swordVBO[6], swordVBO[7], swordVBO[8], swordVBO[12], swordVBO[13], swordVBO[14], swordVBO[18], swordVBO[19]);
 	
 	bladeVBO[0] = x+0.2; bladeVBO[1] = y+height-0.1; bladeVBO[2] = z;
-	bladeVBO[3] = 0.0; bladeVBO[4] = 1.0; bladeVBO[5] = 0.0;
-	bladeVBO[6] = 0.0; bladeVBO[7] = 0.0;
+	bladeVBO[3] = 0.0; bladeVBO[4] = 0.0;
 
-	bladeVBO[8] = x+width+0.2; bladeVBO[9] = y+height-0.1; bladeVBO[10] = z;
-	bladeVBO[11] = 0.0; bladeVBO[12] = 1.0; bladeVBO[13] = 0.0;
-	bladeVBO[14] = 1.0; bladeVBO[15] = 0.0;
+	bladeVBO[5] = x+width+0.2; bladeVBO[6] = y+height-0.1; bladeVBO[7] = z;
+	bladeVBO[8] = 1.0; bladeVBO[9] = 0.0;
 
-	bladeVBO[16] = x+width+0.2;	bladeVBO[17] = y+4*height;	bladeVBO[18] = z;
-	bladeVBO[19] = 0.0;	bladeVBO[20] = 1.0;	bladeVBO[21] = 0.0;
-	bladeVBO[22] = 1.0;	bladeVBO[23] = 1.0;
+	bladeVBO[10] = x+width+0.2;	bladeVBO[11] = y+4*height;	bladeVBO[12] = z;
+	bladeVBO[13] = 1.0;	bladeVBO[14] = 1.0;
 
-	bladeVBO[24] = x+0.2;	bladeVBO[25] = y+4*height;	bladeVBO[26] = z;
-	bladeVBO[27] = 0.0;	bladeVBO[28] = 1.0;	bladeVBO[29] = 0.0;
-	bladeVBO[30] = 0.0;	bladeVBO[31] = 1.0;
+	bladeVBO[15] = x+0.2;	bladeVBO[16] = y+4*height;	bladeVBO[17] = z;
+	bladeVBO[18] = 0.0;	bladeVBO[19] = 1.0;
 
-	printf("bladeVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", bladeVBO[0], bladeVBO[1], bladeVBO[2], bladeVBO[6], bladeVBO[7], bladeVBO[8], bladeVBO[12], bladeVBO[13], bladeVBO[14], bladeVBO[18], bladeVBO[19], bladeVBO[20]);
-}
-
-GLuint ConvertIplToTexture(IplImage *image)
-{
-  GLuint texture;
-
-  glGenTextures(1,&texture);
-  glBindTexture(GL_TEXTURE_2D,texture);
-  /*glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
-  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);*/
-  gluBuild2DMipmaps(GL_TEXTURE_2D,3,image->width,image->height,
-  GL_BGR,GL_UNSIGNED_BYTE,image->imageData);
-
- return texture;
+	INFO("bladeVBO : (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) (%f,%f,%f) \n", bladeVBO[0], bladeVBO[1], bladeVBO[2], bladeVBO[6], bladeVBO[7], bladeVBO[8], bladeVBO[12], bladeVBO[13], bladeVBO[14], bladeVBO[18], bladeVBO[19]);
 }
 
 // Function turn a cv::Mat into a texture, and return the texture ID as a GLuint for use
@@ -205,71 +137,22 @@ GLuint matToTexture(cv::Mat &mat, GLenum minFilter, GLenum magFilter, GLenum wra
 	    minFilter == GL_NEAREST_MIPMAP_LINEAR ||
 	    minFilter == GL_NEAREST_MIPMAP_NEAREST)
 	{
-		printf("glGenerateMipMap() \n");
+		INFO("glGenerateMipMap() \n");
 		//glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
 	return textureID;
 }
 
-void detectHand(){
-	/*std::vector<Rect> faces;
-	Mat frame_gray;
-
-	cvtColor( mat_frame, frame_gray, CV_BGR2GRAY );
-	equalizeHist( frame_gray, frame_gray );
-	  
-	hand_cc.detectMultiScale( frame_gray, faces, 1.1, 2, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30) );
-	
-	for (vector<Rect>::iterator fc = faces.begin(); fc != faces.end(); ++fc) {
-		rectangle(mat_frame, (*fc).tl(), (*fc).br(), Scalar(0, 255, 0), 2, CV_AA);
-	}
-	  
-	return mat_frame;*/
-
-	vector<Rect> faces;
-	*capture >> ci;
-    cvtColor(ci, gsi, COLOR_BGR2GRAY);
-    hand_cc->detectMultiScale(gsi, faces, 1.3, 5);
-    for (vector<Rect>::iterator fc = faces.begin(); fc != faces.end(); ++fc) {
-      rectangle(ci, (*fc).tl(), (*fc).br(), Scalar(0, 255, 0), 2, CV_AA);
-    }
-}
-
-/*double convertCoord(int coord, int choice){
-	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
-	printf("xcam = %f ycam = %f\n", xmax_cam, ymax_cam);
-
-	if(choice==0){
-		printf("convert x = %f \n", (((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1));
-		return (((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1);
-	}else{
-		printf("convert y = %f \n", (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1));
-		return (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1);
-	}
-}*/
-
-double convertCoord(int coord, int choice, double width, double height){
-	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
-	printf("xcam = %f ycam = %f\n", xmax_cam, ymax_cam);
-	if(choice==0){
-		printf("convert x = %f \n", ((((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width);
-		return ((((2*coord*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width;
-	}else{
-		if(choice==1)printf("convert y = %f \n", (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height);
-		return (((2*(ymax_cam-coord*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height;
-	}
-}
-
 double convertX(double x, double width, double height){
 	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
-	printf("convert x = %f \n", ((((2*x*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width);
+	INFO("convert x = %f \n", ((((2*x*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width);
 	return ((((2*x*(xmax_cam/ymax_cam))/xmax_cam)-1)*(-1))-width;
 }
 
 double convertY(double y, double width, double height){
 	double xmax_cam = imgOriginal.rows, ymax_cam = imgOriginal.cols;
-	printf("convert y = %f \n", (((2*(ymax_cam-y*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height);
+	INFO("convert y = %f \n", (((2*(ymax_cam-y*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height);
 	return (((2*(ymax_cam-y*(ymax_cam/xmax_cam)))/ymax_cam)-1)-height;
 }
 
@@ -281,31 +164,7 @@ double convertHeight(double toConvert){
 	return ((2*toConvert)/imgOriginal.cols)+0.1;
 }
 
-/*void drawModel(double x, double y, double z){
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(1.0, 1.0, 1.0);
-	if(!model) {
-		model = glmReadOBJ("obj/sword/Sword.obj");
-		if (!model) exit(0);
-			glmUnitize(model);
-			glmScale(model, 15);
-
-			glmFacetNormals(model);
-			glmVertexNormals(model, 90.0);
-	} 
-	glmDraw(model, GLM_SMOOTH | GLM_MATERIAL);
-	glPopAttrib();
-}*/
-
 void detectColor(){
-	/*VideoCapture cap(0); //capture the video from web cam
-
-	if(!cap.isOpened()){
-		cout << "Cannot open the web cam" << endl;
-		//return NULL;
-	}*/
-
 	int lowH = 10;
 	int highH = 30;
 
@@ -318,10 +177,6 @@ void detectColor(){
 	Mat imgHSV, imgThresholded;
 
 	*capture>>imgOriginal;
-
-	/*if (!cap.read(imgOriginal)){
-		cout << "Cannot read a frame from video stream" << endl;
-	}*/
 
 	cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
@@ -351,10 +206,10 @@ void detectColor(){
 			largest_contour_index=i;                //Store the index of largest contour
 			bounding_rect=boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
 
-			printf(" x = %d \n", bounding_rect.x);
-			printf(" y = %d \n", bounding_rect.y);
-			printf(" width = %d \n", bounding_rect.width);
-			printf(" height = %d \n", bounding_rect.height);
+			INFO(" x = %d \n", bounding_rect.x);
+			INFO(" y = %d \n", bounding_rect.y);
+			INFO(" width = %d \n", bounding_rect.width);
+			INFO(" height = %d \n", bounding_rect.height);
 		}
 	}
 
@@ -401,46 +256,16 @@ void reshape(int width, int height){
 	glMatrixMode(GL_MODELVIEW);
 }
 
-static void drawBackground(void){
-	/*frame = cvQueryFrame(capture);
-	texture = ConvertIplToTexture(frame);*/
-	
-	//mat_frame = cvQueryFrame(capture);
-	//detectHand();
-	detectColor();
-	/*printf("mat.rows = %d \n",imgOriginal.rows);
-	printf("mat.cols = %d \n",imgOriginal.cols);*/
-	texture = matToTexture(imgOriginal, GL_NEAREST, GL_NEAREST, GL_CLAMP);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	//glEnableClientState(GL_COLOR_ARRAY);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glVertexPointer(3, GL_FLOAT, 8*sizeof(GLfloat), background);
-	//glColorPointer(3, GL_FLOAT, 8*sizeof(GLfloat), &(background[3]));
-	glTexCoordPointer(2, GL_FLOAT, 8*sizeof(GLfloat), &(background[6]));
-
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	//glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-}
-
-static void drawSword(){
+static void drawHilt(){
 	glBindTexture(GL_TEXTURE_2D, hiltText);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	//glEnableClientState(GL_COLOR_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glVertexPointer(3, GL_FLOAT, 8*sizeof(GLfloat), swordVBO);
-	//glColorPointer(3, GL_FLOAT, 6*sizeof(GLfloat), &(swordVBO[3]));
-	glTexCoordPointer(2, GL_FLOAT, 8*sizeof(GLfloat), &(swordVBO[6]));
+	glVertexPointer(3, GL_FLOAT, 5*sizeof(GLfloat), swordVBO);
+	glTexCoordPointer(2, GL_FLOAT, 5*sizeof(GLfloat), &(swordVBO[3]));
 	
 	glDrawArrays(GL_QUADS, 0, 4);
 
-	//glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);	
 }
@@ -448,29 +273,26 @@ static void drawSword(){
 static void drawBlade(){
 	glBindTexture(GL_TEXTURE_2D, bladeText);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	//glEnableClientState(GL_COLOR_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glVertexPointer(3, GL_FLOAT, 8*sizeof(GLfloat), bladeVBO);
-	//glColorPointer(3, GL_FLOAT, 6*sizeof(GLfloat), &(bladeVBO[3]));
-	glTexCoordPointer(2, GL_FLOAT, 8*sizeof(GLfloat), &(bladeVBO[6]));
+	glVertexPointer(3, GL_FLOAT, 5*sizeof(GLfloat), bladeVBO);
+	glTexCoordPointer(2, GL_FLOAT, 5*sizeof(GLfloat), &(bladeVBO[3]));
 	
 	glDrawArrays(GL_QUADS, 0, 4);
 
-	//glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-static void drawData(){
+static void drawCam(){
 	detectColor();
-	texture = matToTexture(imgOriginal, GL_NEAREST, GL_NEAREST, GL_CLAMP);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	camText = matToTexture(imgOriginal, GL_NEAREST, GL_NEAREST, GL_CLAMP);
+	glBindTexture(GL_TEXTURE_2D, camText);
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 5*sizeof(GLfloat), data);
-	glTexCoordPointer(2, GL_FLOAT, 5*sizeof(GLfloat), &(data[3]));
+	glVertexPointer(3, GL_FLOAT, 5*sizeof(GLfloat), camVBO);
+	glTexCoordPointer(2, GL_FLOAT, 5*sizeof(GLfloat), &(camVBO[3]));
 	glDrawArrays(GL_QUADS, 0, 4);
 	glDisableClientState(GL_VERTEX_ARRAY);	
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -481,15 +303,9 @@ void display(void){
 	glLoadIdentity();					
 	gluLookAt(0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-	drawData();
-	//drawBackground();
-	drawSword();
+	drawCam();
+	drawHilt();
 	drawBlade();
-
-	/*glPushMatrix();
-	glTranslatef(0.0, 0.0, 10.0);
-	drawModel();
-	glPopMatrix();*/
 
 	glutSwapBuffers();
 }
